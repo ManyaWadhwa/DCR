@@ -14,5 +14,8 @@ python run_end_to_end.py --type three_step --dataset [dataset] --input_file [fil
 --cache_dir [cache_dir] \ --feedback_model [feedback_model] --refinement_model [refinement_model] --output_file [output_file.jsonl]
 ```
 
-`dataset`: tofueval / ultrachat \\ 
-`file_name.json` : input file name, in JSONL format. Each JSON object should have 
+`dataset`: tofueval / ultrachat 
+
+`file_name.json` : input file name, in JSONL format. Each JSON object should have
+
+
