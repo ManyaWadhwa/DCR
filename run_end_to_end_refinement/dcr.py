@@ -1,7 +1,7 @@
 import os
 import sys
 os.environ['HF_HOME'] = "/data/users/mwadhwa/"
-os.environ['CUDA_VISIBLE_DEVICES'] = "2,3"
+os.environ['CUDA_VISIBLE_DEVICES'] = "2"
 sys.path.append("..")
 from typing import List
 from utils import load_model, make_final_prompt, run_inference
@@ -13,13 +13,6 @@ model_mapping = {
     "llama3-ft": {"feedback": "wadhma/Critique-L3-FT-DCR", "refine": "wadhma/Refine-L3-FT-DCR"},
 }
 
-
-# model_mapping = {
-#     "llama2-ft": {"feedback": "/data/users/mwadhwa/models/combined_training/feedback_error_only_unified_training_feedback_without_correct_8_8_0.0006_3_10/llama-2-7b-error_detection_merged",
-#                   "refine": "/data/users/mwadhwa/models/combined_training/refinement_error_only_unified_training_refinement_without_correct_8_8_0.0006_3_10/llama-2-7b-error_detection_merged"},
-#     "llama3-ft": {"feedback": "/data/users/mwadhwa/models/combined_training_llama3/feedback_without_correct_unified_training_8_8_0.0006_3_10/llama3_ft__merged",
-#                   "refine": "/data/users/mwadhwa/models/combined_training/refinement_error_only_unified_refinement_without_correct_8_8_0.0006_3_10/llama3_ft__merged"},
-# }
 
 def resize_embedding(model):
     model.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
@@ -148,11 +141,10 @@ MICHELE NORRIS, host: Karim Sadjadpour is an analyst on Iran for the Internation
 Summarize the above on the topic: 'Control and decision-making in Tehran'.
 """
     initial_response = """The Iranian regime is dysfunctional, with the Supreme Leader Ayatollah Khamenei having constitutional jurisdiction over the Revolutionary Guards, including the Quds Force. The Quds Force reports to the Revolutionary Guards, but it is not clear who specifically authorized their actions in Iraq. The Quds Force is involved in intelligence operations and social capital experiments in Iraq."""
-    model = "llama2-ft"
+    model = "llama3-ft"
     start = time.time()
     dcr = DCR(cuda_id=0, model_name=model, path_to_minicheck="/home/mwadhwa/code/MiniCheck/",cache_dir="/data/users/mwadhwa/")
     to_load = time.time()
-    # print(dcr.critique(source_document, initial_response))
     refinement = dcr.refine(source_text=source_document, initial_response=initial_response)
     to_refine = time.time()
     print(f"Time to load models: {to_load - start}")
