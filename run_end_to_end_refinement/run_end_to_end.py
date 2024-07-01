@@ -6,6 +6,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
+from utils import load_model
 
 REPO_ROOT = Path(__file__).absolute().parent.parent
 print(f"Adding {REPO_ROOT} to PATH")
@@ -15,47 +16,8 @@ import torch
 import transformers
 import numpy as np
 from nltk.tokenize import sent_tokenize
-from transformers import pipeline, LlamaTokenizer, LlamaForCausalLM
-
 from fine_tuning.final_prompts import prompts
-from other_feedback_model_prompts import make_shepherd_prompt, make_ultracm_prompt
 from run_evaluate_revision import edit_distance_ngram_operations
-from utils import (
-    make_llama2_prompt,
-    make_llama3_prompt,
-    get_gpt4_response,
-    DEFAULT_SYSTEM_PROMPT,
-)
-
-
-def make_final_prompt(model_path, user_message, instruction=None):
-    if model_path == "llama2":
-        return make_llama2_prompt(system=DEFAULT_SYSTEM_PROMPT, user_message=user_message)
-    elif model_path == "llama3":
-        return make_llama3_prompt(system=DEFAULT_SYSTEM_PROMPT, user_message=user_message)
-    elif model_path == "gpt4":
-        return user_message
-    elif model_path == "ultracm":
-        assert instruction
-        return make_ultracm_prompt(instruction, user_message)
-    elif model_path == "shepherd":
-        assert instruction
-        return make_shepherd_prompt(instruction, user_message)
-    elif "llama3" in model_path:
-        return make_llama3_prompt(system=DEFAULT_SYSTEM_PROMPT, user_message=user_message)
-    else:
-        return make_llama2_prompt(system=DEFAULT_SYSTEM_PROMPT, user_message=user_message)
-
-
-def run_inference(generator, prompt, model_name, do_sample=False):
-    if model_name == "gpt4":
-        return generator(prompt).strip()
-    elif model_name == "ultracm":
-        response = generator(prompt, num_return_sequences=1, return_full_text=False, handle_long_generation="hole",
-                             temperature=1.0, top_p=1.0, max_new_tokens=1024, repetition_penalty=1.2, do_sample=True)
-        return response[0]["generated_text"].strip("\n").strip().replace(prompt, "").strip()
-    return generator(prompt, do_sample=do_sample)[0]["generated_text"].replace(prompt, "").strip()
-
 
 methods = {
     "single_step": {"detect": None, "feedback": None, "refinement": prompts["single_step"]},
@@ -118,46 +80,7 @@ def post_process_refinement(refinement):
     return refinement_fixed
 
 
-def load_model(model_path):
-    """
-    If the model name is a generic llaam2/llama3/gpt4 then it is probably a non FT model
-    other it is probably a FT model so load it with the path
-    :param model_path:
-    :return:
-    """
-    if model_path == "llama2":
-        print(model_path)
-        model_id = "meta-llama/Llama-2-7b-chat-hf"
-        generator = pipeline(
-            "text-generation", model=model_id, device_map="auto", max_new_tokens=2048
-        )
-    elif model_path == "llama3":
-        print(model_path)
 
-        model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
-        generator = pipeline(
-            "text-generation",
-            model=model_id,
-            model_kwargs={"torch_dtype": torch.bfloat16},
-            device_map="auto",
-            max_new_tokens=2048,
-        )
-    elif model_path == "ultracm":
-        tokenizer = LlamaTokenizer.from_pretrained("openbmb/UltraCM-13b")
-        model = LlamaForCausalLM.from_pretrained("openbmb/UltraCM-13b", device_map="auto")
-        generator = pipeline("text-generation", model=model, max_new_tokens=2048, tokenizer=tokenizer)
-    elif model_path == "gpt4":
-        model_id = "gpt-4-01250-preview"
-        generator = get_gpt4_response
-    elif model_path == "shepherd":
-        generator = pipeline("text-generation", model="reciprocate/shepherd-13b", max_new_tokens=126,
-                             device_map='auto')
-    else:
-        generator = pipeline(
-            "text-generation", model=model_path, max_new_tokens=2048, device_map="auto"
-        )
-        print(f"{generator.device=}")
-    return generator
 
 
 def unload_model(generator):
@@ -552,7 +475,6 @@ def run_two_step_with_minicheck(
     return {
         "sentence_wise_labels": sentence_wise_labels,
         "sampled_refinements": sampled_refinements["sampled_refinements"],
-        "sampled_refinements": sampled_refinements["sampled_refinements"],
         "refinement": sampled_refinements["minimum_edit_refinement"],
         "refine_prompts": sys_prompt,
     }
@@ -593,7 +515,6 @@ def run_three_step(
             use_sentence_wise_labels=True,
         )
 
-        input_file = feedback_file
 
     run_refinement_step(
         input_file=input_file,
