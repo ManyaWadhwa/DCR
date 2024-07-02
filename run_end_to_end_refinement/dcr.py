@@ -1,10 +1,10 @@
 import os
 import sys
 os.environ['HF_HOME'] = "/data/users/mwadhwa/"
-os.environ['CUDA_VISIBLE_DEVICES'] = "2"
-sys.path.append("..")
+os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
+sys.path.append("../")
 from typing import List
-from utils import load_model, make_final_prompt, run_inference
+from run_end_to_end_refinement.utils import load_model, make_final_prompt, run_inference
 from fine_tuning.final_prompts import prompts
 from nltk.tokenize import sent_tokenize
 import time
@@ -141,7 +141,7 @@ MICHELE NORRIS, host: Karim Sadjadpour is an analyst on Iran for the Internation
 Summarize the above on the topic: 'Control and decision-making in Tehran'.
 """
     initial_response = """The Iranian regime is dysfunctional, with the Supreme Leader Ayatollah Khamenei having constitutional jurisdiction over the Revolutionary Guards, including the Quds Force. The Quds Force reports to the Revolutionary Guards, but it is not clear who specifically authorized their actions in Iraq. The Quds Force is involved in intelligence operations and social capital experiments in Iraq."""
-    model = "llama3-ft"
+    model = "llama2"
     start = time.time()
     dcr = DCR(cuda_id=0, model_name=model, path_to_minicheck="/home/mwadhwa/code/MiniCheck/",cache_dir="/data/users/mwadhwa/")
     to_load = time.time()
