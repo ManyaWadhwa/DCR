@@ -11,7 +11,7 @@ document_instruction = '' # source document with the summarization instruction
 initial_response = '' # initial response 
 model = "llama3-ft" # critique and refinement model: could be any HF model or GPT-4
 dcr = DCR(cuda_id=0, model_name=model, path_to_minicheck="/home/mwadhwa/code/MiniCheck/",cache_dir="/data/users/mwadhwa/")
-refinement = dcr.refine(source_text=source_document, initial_response=initial_response)
+refinement = dcr.refine(source_text=document_instruction, initial_response=initial_response)
 print(refinement)
 ```
 
